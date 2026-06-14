@@ -2227,6 +2227,7 @@
     const clone = svg.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     clone.removeAttribute('class');
+    clone.querySelectorAll('.map-base-image').forEach(node => node.remove());
     clone.querySelectorAll('[tabindex]').forEach(node => node.removeAttribute('tabindex'));
     return new XMLSerializer().serializeToString(clone);
   }
