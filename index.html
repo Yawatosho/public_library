@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>公共図書館統計グラフビューア</title>
+  <meta name="description" content="公共図書館に関する統計データを、都道府県別に棒グラフ、散布図、折れ線グラフ、日本地図で比較できるウェブアプリです。">
+  <link rel="stylesheet" href="./styles.css?v=20260614-map-credit">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-J6NS8CCNWN"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-J6NS8CCNWN');
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.0/chart.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.0.0/chartjs-plugin-zoom.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2" defer></script>
+  <script src="./app.js?v=20260614-map-credit" defer></script>
+</head>
+<body>
+  <main id="main">
+    <header class="page-header">
+      <h1>公共図書館統計グラフビューア</h1>
+    </header>
+
+    <section class="viewer" aria-label="グラフビューア">
+      <div id="modeSwitch" role="radiogroup" aria-label="表示モード">
+        <label class="mode-option">
+          <input id="barMode" checked name="mode" type="radio" value="bar">
+          <span>1つの指標について見る</span>
+        </label>
+        <label class="mode-option">
+          <input id="scatterMode" name="mode" type="radio" value="scatter">
+          <span>2つの指標の散布図を見る</span>
+        </label>
+        <label class="mode-option">
+          <input id="lineMode" name="mode" type="radio" value="line">
+          <span>時系列で見る</span>
+        </label>
+        <label class="mode-option">
+          <input id="mapMode" name="mode" type="radio" value="map">
+          <span>日本地図で見る</span>
+        </label>
+      </div>
+
+      <div id="controls" aria-label="操作パネル"></div>
+
+      <div id="chart-container">
+        <canvas id="chart" aria-label="図書館統計グラフ"></canvas>
+        <div id="mapContainer" class="map-container" hidden></div>
+        <div id="visualizationStatus" class="visualization-status" hidden></div>
+      </div>
+    </section>
+
+    <section class="content-section" aria-labelledby="usage-heading">
+      <h2 id="usage-heading">使い方</h2>
+      <p>本ツールは、日本の公共図書館に関する各種統計データを、都道府県別に棒グラフ・散布図・折れ線グラフ・日本地図で比較・分析できるウェブアプリです。</p>
+
+      <h3>表示モードの切り替え</h3>
+      <p>画面最上部に「1つの指標について見る」「2つの指標の散布図を見る」「時系列で見る」「日本地図で見る」の4つのボタンがあります。見たい形式に応じて切り替えてください。</p>
+
+      <h4>1つの指標について見る（棒グラフモード）</h4>
+      <ul>
+        <li>「項目」で分析したい指標（たとえば「貸出冊数」など）を選択します。</li>
+        <li>選んだ年の各都道府県の値が、高い順（降順）で棒グラフに並びます。値のほか、前年差や増減率のランキングも表示できます。</li>
+        <li>表示範囲は全件・上位10件・上位20件・上位50件から選べます。</li>
+        <li>都道府県名を検索し、特定の都道府県を強調できます。</li>
+        <li>グラフ右上の「PNG保存」ボタンから画像保存が可能です。</li>
+      </ul>
+
+      <h4>2つの指標の散布図を見る（散布図モード）</h4>
+      <ul>
+        <li>「X軸」「Y軸」で2つの指標を選びます。</li>
+        <li>各点が各都道府県を表し、ラベル付きで分布がわかります。</li>
+        <li>都道府県名を検索し、特定の都道府県を目立たせることができます。</li>
+        <li>相関係数、回帰直線、中央値ライン、4象限ラベルも表示可能です。</li>
+        <li>X軸・Y軸の最大値指定や、グラフのズーム・リセットもできます。</li>
+        <li>PNG保存も可能です。</li>
+      </ul>
+
+      <h4>時系列で見る（折れ線グラフモード）</h4>
+      <ul>
+        <li>都道府県名を検索して複数の都道府県を選ぶと、選択した都道府県（または合計）の当該指標の推移を年度ごとに折れ線で表示します。</li>
+        <li>右上の「PNG保存」ボタンから画像保存が可能です。</li>
+      </ul>
+
+      <h4>日本地図で見る（地図モード）</h4>
+      <ul>
+        <li>「項目」と「年」を選ぶと、日本地図SVG上で都道府県別の値の大きさを比較できます。</li>
+        <li>「地図」でヒートマップ表示と、値に応じた棒を上に伸ばす表示を切り替えられます。</li>
+        <li>地図にマウスを重ねると、都道府県名・項目・値を確認できます。</li>
+        <li>PNG保存も可能です。</li>
+      </ul>
+    </section>
+
+    <section class="content-section" aria-labelledby="data-heading">
+      <h2 id="data-heading">データについて</h2>
+      <ul>
+        <li>「<a href="https://japanlibraryassociation.app.box.com/s/ctkfz1ejj3e5n798vjticckl4nn3a85h/folder/314445225520" target="_blank" rel="noopener noreferrer">日本の図書館 統計と名簿YYYY年版</a>」（日本図書館協会）を加工して作成</li>
+        <li>上記データの各年度の「pd1_p集計1.CSV」「pd2_p集計2.CSV」「pd3_p集計3.CSV」「pd4_p集計4.CSV」を用いています。</li>
+        <li>人口は、e-Statの「<a href="https://www.e-stat.go.jp/stat-search/files?page=1&amp;toukei=00200524&amp;tstat=000000090001&amp;metadata=1&amp;data=1" target="_blank" rel="noopener noreferrer">人口推計（各年10月1日現在人口）</a>」を用いています。</li>
+        <li>各項目の説明は、上記サイトをご参照ください。</li>
+      </ul>
+    </section>
+
+    <section class="content-section" aria-labelledby="history-heading">
+      <h2 id="history-heading">更新履歴</h2>
+      <p>2026.6.14</p>
+      <ul>
+        <li>HTML・CSS・JavaScriptを分離し、同じフォルダ内のJSONファイルからデータを読み込む構成に変更しました。</li>
+        <li>表示条件をURLに保存できるようにし、URL共有ボタンと最新年の自動選択を追加しました。</li>
+        <li>操作パネルを整理し、都道府県検索、指標のカテゴリ分け、上位表示、複数都道府県の時系列比較に対応しました。</li>
+        <li>前年差・増減率ランキング、散布図の中央値ライン・4象限ラベルなど、比較しやすい表示を追加しました。</li>
+        <li>日本地図モードを追加し、Japan_Map_Lincun.svgをベースにしたヒートマップ表示と棒を伸ばす表示に対応しました。</li>
+        <li>PNG保存時のタイトル・条件・出典表示を改善し、Google Analyticsによる計測に対応しました。</li>
+      </ul>
+
+      <p>2026.4.5</p>
+      <ul>
+        <li>2020年のデータを追加しました。</li>
+      </ul>
+
+      <p>2025.8.16</p>
+      <ul>
+        <li>「時系列で見る」モードを追加しました。</li>
+        <li>名称を「公共図書館統計グラフビューア」に変更しました。</li>
+      </ul>
+
+      <p>2025.7.26</p>
+      <ul>
+        <li>公共図書館統計ビューアを作成しました。</li>
+      </ul>
+
+      <p>2025.7.22</p>
+      <ul>
+        <li>回帰直線を表示する機能を追加しました。</li>
+      </ul>
+
+      <p>2025.7.19</p>
+      <ul>
+        <li>相関係数を表示しました。</li>
+        <li>グラフのPNG画像を保存する機能を追加しました。</li>
+        <li>グラフに項目ラベルを表示しました。</li>
+      </ul>
+
+      <p>2025.7.18</p>
+      <ul>
+        <li>任意の都道府県を強調できる機能を追加しました。</li>
+      </ul>
+
+      <p>2025.7.16</p>
+      <ul>
+        <li>公共図書館統計散布図ビューアを作成しました。</li>
+      </ul>
+    </section>
+
+    <section class="content-section" aria-labelledby="reference-heading">
+      <h2 id="reference-heading">参考</h2>
+      <ul class="reference-list">
+        <li><a href="https://www.jla.or.jp/library_statistics_in_japan/" target="_blank" rel="noopener noreferrer">日本の図書館統計</a></li>
+        <li><a href="https://yawatosho.hateblo.jp/graph_viewer" target="_blank" rel="noopener noreferrer">大学図書館統計グラフビューア - やわらか図書館学</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
